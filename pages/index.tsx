@@ -31,6 +31,7 @@ export default function Home() {
   const reset = () => {
     setPreviewUrl(null);
     setProcessedImage(null);
+    setImageUrl("");
     const imageInput = document.getElementById('picture') as HTMLInputElement;
     if (imageInput) {
       imageInput.value = '';
