@@ -13,6 +13,7 @@ const inter = Inter({ subsets: ["latin"] });
 export default function Home() {
   const { toast } = useToast()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,7 +46,12 @@ export default function Home() {
     }
   };
 
-  const sendFile = async () => {
+  const predictImage = async () => {
+    setProcessedImage(null);
+    if (imageUrl) {
+      predictImageFromUrl();
+      return;
+    }
     const imageInput = document.getElementById('picture') as HTMLInputElement;
     if (imageInput && imageInput.files && imageInput.files[0]) {
       setIsLoading(true);
@@ -78,6 +84,25 @@ export default function Home() {
       })
     }
   };
+  // https://brand-logo.andreidev.site/predict_url
+  const predictImageFromUrl = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post('https://brand-logo.andreidev.site/predict_url', {
+        image_url: imageUrl,
+      });
+      setProcessedImage(`data:image/jpeg;base64,${response.data.image_base64}`);
+    } catch (error) {
+      // console.error('Error sending file:', error);
+      toast({
+        title: "Error",
+        description: "Error sending file",
+      })
+    }
+    finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
   }, []);
@@ -94,15 +119,20 @@ export default function Home() {
           <div>
             <Label htmlFor="picture">Picture</Label>
             <Input id="picture" type="file" onChange={handleFileChange} />
-            <Button onClick={sendFile} className="w-full mt-5">Send for Prediction</Button>
+            <p className="text-center py-3">
+              Or paste an image URL below
+            </p>
+            <Input type="text" placeholder="Image URL" value={imageUrl} onChange={e => setImageUrl(e.target.value)} />
+            <Button onClick={predictImage} className="w-full mt-5">Send for Prediction</Button>
             <Button variant={"destructive"} onClick={reset} className="w-full mt-5">Reset</Button>
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 mt-16">
-          <div className="flex justify-center h-full w-full">
-            {previewUrl && <Image className="h-full" src={previewUrl} alt="Uploaded preview" width={400} height={400} />}
+          <div className="flex justify-center h-full w-full max-h-[500px]">
+            {previewUrl && !imageUrl && <Image className="h-full" src={previewUrl} alt="Uploaded preview" width={400} height={400} />}
+            {imageUrl && <img className="h-full" src={imageUrl} alt="URL preview" />}
           </div>
-          <div className="flex justify-center h-full w-full">
+          <div className="flex justify-center h-full w-full max-h-[500px]">
             {processedImage && <img className="h-full" src={processedImage} alt="Processed preview" />}
           </div>
         </div>
